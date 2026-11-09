@@ -6,6 +6,24 @@ from osdagbridge.core.utils.common import (
 )
 
 
+_UNICODE_MATH = {
+    '≤': r'$\leq$',    # ≤
+    '≥': r'$\geq$',    # ≥
+    '±': r'$\pm$',     # ±
+    '≠': r'$\neq$',    # ≠
+    '≈': r'$\approx$', # ≈
+    'σ': r'$\sigma$',  # σ
+    'τ': r'$\tau$',    # τ
+    'λ': r'$\lambda$', # λ
+    'χ': r'$\chi$',    # χ
+    'γ': r'$\gamma$',  # γ
+    'δ': r'$\delta$',  # δ
+    'Δ': r'$\Delta$',  # Δ
+    'φ': r'$\phi$',    # φ
+    '°': r'$^{\circ}$',  # °
+}
+
+
 def _tex(value):
     """Escape a Python value for safe LaTeX embedding."""
     s = str(value) if value is not None else ''
@@ -22,6 +40,10 @@ def _tex(value):
                     ('~', r'\textasciitilde{}'), ('^', r'\^{}')]:
         s = s.replace(ch, esc)
     s = s.replace(':', r':\allowbreak{}')
+    # Unicode math symbols pdflatex cannot typeset directly. Applied after the
+    # escaping above so the '$' we insert here is not escaped again.
+    for uni, tex in _UNICODE_MATH.items():
+        s = s.replace(uni, tex)
     return s
 
 

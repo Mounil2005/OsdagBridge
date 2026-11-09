@@ -142,10 +142,11 @@ from osdagbridge.core.utils.common import (
 )
 
 from osdagbridge.core.reports.report_utils import _tex, _render_value, get_girder_entries
+from osdagbridge.core.reports import charts
 
 if TYPE_CHECKING:
     pass
-def ch5_design_checks(checks_data, bridge) -> str:
+def ch5_design_checks(checks_data, bridge, asset_dir=None) -> str:
     """Chapter 5 — Design Checks.
 
     Parameters
@@ -975,8 +976,14 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         ratio, sf, lim = best
         return ("---", f"{sf:.1f}", f"{lim:.0f}", _ur_522(ratio))
 
+    _ur_records = []   # (label, UR) collected for the Section 5.5 bar charts
+
     def _row522(label, cells):
         c = [x if x else "---" for x in cells]
+        try:
+            _ur_records.append((label, charts.to_float(cells[3])))
+        except (IndexError, TypeError):
+            pass
         return label + r" & " + r" & ".join(c) + r" \\[6pt]" + "\n\\hline"
 
     # Deck rows: Demand/Capacity from deck_report_values (KEY_DD_*, the same dict
@@ -1064,6 +1071,8 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         _ed_shear_row,
     ]
     t522_content = "\n".join(_t522)
+    # UR bar charts for Section 5.5 (written into asset_dir, embedded below).
+    ur_chart_tex = charts.ur_chart(_ur_records, asset_dir) if asset_dir else ""
 
     return r"""
 \chapter{Design Checks}
@@ -1500,6 +1509,7 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 """ + t522_content + r"""
 \end{longtable}
 \noindent\textit{Note: UR = Demand / Capacity. All values $\leq 1.0$ indicate passing checks. The governing check for each component is highlighted in the individual design check sections above.}
+""" + ur_chart_tex + r"""
 
 """
 
