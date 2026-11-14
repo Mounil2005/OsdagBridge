@@ -116,3 +116,35 @@ def test_material_chart_handles_missing_values(tmp_path):
 def test_unicode_math_symbols_are_escaped():
     from osdagbridge.core.reports.report_utils import _tex
     assert r"$\leq$" in _tex("Leg ≤ H")
+
+
+def test_end_diaphragm_steel_quantity():
+    from osdagbridge.core.boq.boq_generator import calculate_material_quantities
+    pre = "member_properties.end_diaphragm_details."
+    outputs = {"crossbracing_forces_dict": {"geometry": {"girder_depth_m": 1.67}}}
+    for p in (1, 2, 3):
+        s = f"G{p}G{p + 1}.E{p}M1"
+        outputs.update({
+            f"{pre}section_properties.area.{s}": 19.1,       # cm2
+            f"{pre}type.{s}": "Cross Bracing",
+            f"{pre}bracing_type.{s}": "X-Bracing",
+            f"{pre}top_chord.{s}": "Yes",
+            f"{pre}bottom_chord.{s}": "Yes",
+        })
+    inputs = {"geometry.span": "30", "typical_section.no_of_girders": "4",
+              "typical_section.girder_spacing": "2.1"}
+    q = calculate_material_quantities(inputs, outputs)
+    # 3 panels x 2 supports x (2 diagonals + top + bottom chord) = 24 members
+    assert q["end_diaphragm_qty"] == "24"
+    # 6 diaphragms x (2 x hypot(2.1, 1.67) + 2 x 2.1) = 57.40 m, area 19.1 cm2, 7.85 t/m3
+    assert abs(float(q["end_diaphragm_wt_total"]) - 0.86) < 0.01
+
+
+def test_material_chart_includes_end_diaphragm_and_shared_axis(tmp_path):
+    q = {"steel_girders_wt_total": "32.89", "bracing_top_wt_total": "0.11",
+         "bracing_bot_wt_total": "0.11", "bracing_diag_wt_total": "0.25",
+         "end_diaphragm_wt_total": "0.86",
+         "concrete_deck_vol_total": "63.00", "rebar_deck_wt_total": "7.56"}
+    tex = charts.material_chart(q, str(tmp_path))
+    assert "not quantified separately" not in tex
+    assert os.path.exists(tmp_path / "material_quantities_chart.png")

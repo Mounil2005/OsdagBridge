@@ -152,9 +152,9 @@ def material_chart(q, out_dir, rel_dir="images"):
             return ""
 
         plt = _plt()
-        fig, (ax1, ax2, ax3) = plt.subplots(
-            1, 3, figsize=(theme.CHART_WIDTH_IN, theme.CHART_MATERIAL_HEIGHT_IN),
-            gridspec_kw={"width_ratios": [1.8, 1, 1]})
+        fig, (ax1, ax2) = plt.subplots(
+            1, 2, figsize=(theme.CHART_WIDTH_IN, theme.CHART_MATERIAL_HEIGHT_IN),
+            gridspec_kw={"width_ratios": [1.5, 1]})
         title_kw = dict(fontsize=theme.CHART_FONT_SIZE + 1, fontweight="bold")
 
         if steel:
@@ -167,22 +167,22 @@ def material_chart(q, out_dir, rel_dir="images"):
         ax1.set_title("Steel Tonnage", **title_kw)
         ax1.tick_params(axis="x", labelsize=8)
 
-        # Concrete volume (m3) and reinforcement weight (MT) have different units,
-        # so they get separate panels (a shared or twin axis would make the two
-        # bars look comparable when they are not).
-        for ax, val, color, unit, title in (
-            (ax2, concrete_vol, theme.CHART_CONCRETE_COLOR, "Volume (m$^3$)", "Deck Concrete"),
-            (ax3, rebar_wt, theme.CHART_REBAR_COLOR, "Weight (MT)", "Reinforcement"),
-        ):
-            ax.bar([0], [val or 0], color=color, width=0.5)
-            ax.set_xticks([])
-            ax.set_ylabel(unit)
-            ax.set_title(title, **title_kw)
-            ax.set_xlim(-0.6, 0.6)
-            if val:
-                ax.text(0, val, f"{val:.2f}", ha="center", va="bottom", fontsize=8)
-                ax.set_ylim(0, val * 1.2)
-        for ax in (ax1, ax2, ax3):
+        # Concrete volume (m3) and reinforcement weight (MT) are drawn on one shared
+        # axis, as requested by the Osdag mentors; each bar is labelled with its unit.
+        pair = [("Deck concrete\n(m$^3$)", concrete_vol, theme.CHART_CONCRETE_COLOR),
+                ("Reinforcement\n(MT)", rebar_wt, theme.CHART_REBAR_COLOR)]
+        vals2 = [v or 0 for _, v, _ in pair]
+        ax2.bar(range(2), vals2, color=[c for _, _, c in pair], width=0.55)
+        ax2.set_xticks(range(2))
+        ax2.set_xticklabels([l for l, _, _ in pair], fontsize=8)
+        ax2.set_ylabel("Quantity (m$^3$ or MT)")
+        ax2.set_title("Concrete vs Reinforcement", **title_kw)
+        for i, v in enumerate(vals2):
+            if v:
+                ax2.text(i, v, f"{v:.2f}", ha="center", va="bottom", fontsize=8)
+        if max(vals2) > 0:
+            ax2.set_ylim(0, max(vals2) * 1.2)
+        for ax in (ax1, ax2):
             ax.spines[["top", "right"]].set_visible(False)
 
         fig.tight_layout()

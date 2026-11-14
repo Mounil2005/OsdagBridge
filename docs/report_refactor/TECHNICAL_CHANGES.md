@@ -13,7 +13,7 @@ Before/after PDFs: `before/Report_Before.pdf`, `after/Report_After.pdf`, both pr
 | 2 | Footer overlap / vertical spacing | Text block ran to the footer; tables 17.6 cm wide on a 15.9 cm text block; `\needspace` on every longtable left half-empty pages and a header-only orphan row. | Bottom margin and `footskip` set in `theme.py`; `tables.fit_column_widths()` scales fixed-width columns to the text width; `\needspace` kept for floats only; `keep_rows_together()` ties multirow groups (one girder = one block) and the last row to the closing rule with `\\*`; `LTchunksize` raised so ties work across 20-row chunks; `\raggedbottom`. |
 | 3 | Load tables (Chapter 3) | Vehicles, impact, braking and footpath load were merged in one 2-column table; footpath value was blank because the computed `fp_str` was never used. | Split into Table 3.3 Vehicular live loads (one row per vehicle selected in the Loading tab, with type, impact factor and IRC 6 clause), Table 3.4 Braking and centrifugal loads, Table 3.5 Footpath live load; all with Value / Unit / Reference columns. Also: Vz and Pz now use the values the code already computed (`vz_str`, `pz_str`). |
 | 4 | UR charts (Section 5.5) | Table only. | `charts.ur_chart()`: 2x2 bar charts (Steel Plate Girders, Concrete Deck Slab, Cross Bracing, End Diaphragms), red dashed line at UR = `theme.UR_THRESHOLD` (1.0), failing bars in red. URs are collected from the same rows that build Table 5.29, so chart and table cannot disagree. Embedded as Figure 5.1. |
-| 5 | Material charts (Chapter 7) | Table only. | `charts.material_chart()`: steel tonnage (girders, cross bracing, end diaphragms where quantified), deck concrete volume, reinforcement weight, in separate panels because their units differ. Embedded as Figure 7.1. |
+| 5 | Material charts (Chapter 7) | Table only; the bill of materials had no End Diaphragm steel quantity. | `boq_generator.py` now computes End Diaphragm steel (new Table 7.1 row 2(d): 2 diaphragms per panel, diagonals and chords or a single beam, member area from `member_properties.end_diaphragm_details.section_properties.area`). `charts.material_chart()` shows steel tonnage (girders, cross bracing, end diaphragms) and deck concrete volume vs reinforcement weight on **one shared axis**, as the Osdag mentors asked. Embedded as Figure 7.1. |
 | 6 | Centralized style | Page geometry, colours, table paddings and header/footer hard-coded in `report_generator.py`. | `theme.py` is the single source of truth (see section 3). `report_generator.preamble()` builds geometry, colours, table settings and the three fancyhdr styles from it. |
 
 ## 2. Files changed
@@ -26,10 +26,11 @@ Before/after PDFs: `before/Report_Before.pdf`, `after/Report_After.pdf`, both pr
 | `report_generator.py` | Imports theme; preamble built from theme; `postprocess_tables()` applied to the assembled document; charts get a temp image directory |
 | `chap3.py` | Live-load tables split; Vz/Pz fixed |
 | `chap5.py` | Collects UR values in `_row522`; embeds UR chart in Section 5.5 (`asset_dir` parameter) |
-| `chap7.py` | Embeds material chart (`asset_dir` parameter) |
+| `chap7.py` | Embeds material chart (`asset_dir` parameter); new Table 7.1 row 2(d) End Diaphragm |
+| `core/boq/boq_generator.py` | End Diaphragm steel quantity (`end_diaphragm_*` keys) |
 | `report_utils.py` | `_tex()` now converts Unicode math symbols (`≤ ≥ ± σ λ ...`) |
 | `examples/generate_report_headless.py` (new) | Headless design + report run for before/after comparison |
-| `tests/unit/test_report_tables.py` (new) | 11 unit tests for table passes, charts, `_tex` |
+| `tests/unit/test_report_tables.py` (new) | 14 unit tests for table passes, charts, `_tex`, End Diaphragm quantity |
 
 ## 3. Structure of `theme.py`
 - **Page:** `PAGE_MARGIN`, `BOTTOM_MARGIN`, `FOOTSKIP_PT`, `LINE_STRETCH`, `TEXT_WIDTH_CM`
@@ -44,9 +45,9 @@ Chapter generators and `report_generator.py` import values from this module and 
 - **Post-processing instead of editing 49 tables by hand.** The tables share one shape (caption, `\hline`, header, `\hline`), so one tested pass fixes all of them and any table added later. Existing tables that define `\endhead` themselves are skipped. The previous code comment warned that an automatic pass could mis-order captions and headings; this pass keeps the caption in the first head and was checked on every table.
 - **Removing `\needspace` for longtable.** It fights longtable's own output routine. With it, a header-only row was printed at the top of the next page and pages were left half empty.
 - **Charts never break the report.** `charts.py` catches exceptions and returns an empty string.
-- **UR threshold = 1.0** (UR = Demand / Capacity, as in the report notes). Awaiting confirmation from the mentors (asked on Discord); it lives in one constant.
-- **End diaphragm steel quantity** is not produced by `calculate_material_quantities()`; the chart omits it and the caption says so. It appears automatically if `end_diaphragm_wt_total` is added.
-- **Separate panels for concrete and reinforcement**, because a shared or twin axis makes bars with different units look comparable.
+- **UR threshold = 1.0** (UR = Demand / Capacity, as in the report notes), confirmed by the Osdag mentors on Discord; it lives in one constant (`theme.UR_THRESHOLD`).
+- **End diaphragm steel quantity** added to the bill of materials on the mentors' request. Count and length per diaphragm: X-bracing = 2 diagonals of length sqrt(spacing^2 + girder depth^2) plus top and bottom chords of length spacing when enabled; beam type = one member of length spacing; two diaphragms per panel (one per support). Weight = area x length x 7.85 t/m3, the same convention as the cross bracing rows.
+- **Concrete volume and reinforcement weight share one axis** (mentors' instruction); each bar is labelled with its own unit.
 
 ## 5. Results (same inputs)
 | Item | Before | After |
@@ -63,5 +64,6 @@ in headless mode; none are tables.
 | UR chart / material chart | none | Figure 5.1 / Figure 7.1 |
 
 ## 6. Known limitations
+- End diaphragm member area is taken as stored in the section properties; if that value is for a single angle of a double-angle section, the End Diaphragm steel is understated by up to a factor of two.
 - Headless mode renders no CAD figures; figure slots show placeholders. Generate the final `Report_After.pdf` from the GUI for the submission.
 - Multirow groups taller than a page can still split.

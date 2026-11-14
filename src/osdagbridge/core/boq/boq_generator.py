@@ -48,6 +48,12 @@ def calculate_material_quantities(inputs: dict, outputs: dict) -> dict:
         "steel_bracing_wt_single": "N.A.",
         "steel_bracing_wt_total": "N.A.",
 
+        "end_diaphragm_vol_formula": r"\placeholder{Area $\times$ Length}",
+        "end_diaphragm_qty": "N.A.",
+        "end_diaphragm_vol_total": "N.A.",
+        "end_diaphragm_wt_single": "N.A.",
+        "end_diaphragm_wt_total": "N.A.",
+
         "bracing_top_vol_formula": r"\placeholder{Area $\times$ Length}",
         "bracing_top_qty": "N.A.",
         "bracing_top_vol_total": "N.A.",
@@ -329,6 +335,53 @@ def calculate_material_quantities(inputs: dict, outputs: dict) -> dict:
                 quantities[f"{prefix}_vol_total"] = "N.A."
                 quantities[f"{prefix}_wt_single"] = "N.A."
                 quantities[f"{prefix}_wt_total"] = "N.A."
+
+        # 5d. End diaphragms: one at each support of every panel between adjacent girders.
+        #     Cross-bracing type: diagonals (2 for X-bracing) plus top/bottom chords if enabled.
+        #     Rolled/welded beam type: one member of length = girder spacing.
+        #     Member area comes from member_properties.end_diaphragm_details.section_properties.area (cm2).
+        try:
+            ed_pre = "member_properties.end_diaphragm_details."
+            cb_geom_ed = (outputs.get("crossbracing_forces_dict") or {}).get("geometry") or {}
+            ed_geom = (outputs.get("end_diaphragm_forces_dict") or {}).get("geometry") or {}
+            depth_val = ed_geom.get("girder_depth_m") or cb_geom_ed.get("girder_depth_m")
+            girder_depth = float(depth_val) if depth_val else 0.0
+            ed_total_len = 0.0
+            ed_total_vol = 0.0
+            ed_total_qty = 0
+            if spacing > 0.0:
+                for pair_no in range(1, n_girders):
+                    suffix = f"G{pair_no}G{pair_no + 1}.E{pair_no}M1"
+                    area_cm2 = outputs.get(f"{ed_pre}section_properties.area.{suffix}")
+                    if area_cm2 in (None, ""):
+                        continue
+                    area_m2 = float(area_cm2) / 10000.0
+                    ed_type = str(outputs.get(f"{ed_pre}type.{suffix}") or "").lower()
+                    if "brac" in ed_type:
+                        brace_type = str(outputs.get(f"{ed_pre}bracing_type.{suffix}") or "").lower()
+                        n_diag = 2 if "x" in brace_type else 1
+                        top = str(outputs.get(f"{ed_pre}top_chord.{suffix}") or "").lower() == "yes"
+                        bot = str(outputs.get(f"{ed_pre}bottom_chord.{suffix}") or "").lower() == "yes"
+                        diag_len = math.hypot(spacing, girder_depth) if girder_depth > 0.0 else 0.0
+                        len_per_ed = n_diag * diag_len + (spacing if top else 0.0) + (spacing if bot else 0.0)
+                        members_per_ed = n_diag + int(top) + int(bot)
+                    else:
+                        len_per_ed = spacing
+                        members_per_ed = 1
+                    pair_len = 2 * len_per_ed          # a diaphragm at each support
+                    ed_total_len += pair_len
+                    ed_total_vol += area_m2 * pair_len
+                    ed_total_qty += 2 * members_per_ed
+            if ed_total_qty > 0 and ed_total_len > 0.0:
+                ed_total_wt = ed_total_vol * 7.85
+                avg_area = ed_total_vol / ed_total_len
+                quantities["end_diaphragm_vol_formula"] = f"${avg_area:.5f}\\text{{ m}}^2 \\times {ed_total_len:.2f}\\text{{ m}} = {ed_total_vol:.5f}\\text{{ m}}^3$"
+                quantities["end_diaphragm_qty"] = str(ed_total_qty)
+                quantities["end_diaphragm_vol_total"] = f"{ed_total_vol:.2f}"
+                quantities["end_diaphragm_wt_single"] = f"{ed_total_wt / ed_total_qty:.4f}"
+                quantities["end_diaphragm_wt_total"] = f"{ed_total_wt:.2f}"
+        except Exception:
+            logger.warning("End diaphragm quantity could not be computed", exc_info=True)
 
         # 6. Crash Barrier (Cu.m) and Weight (MT)
         KEY_CB_AREA = "typical_section.crash_barrier.area"
