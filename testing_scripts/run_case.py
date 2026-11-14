@@ -93,6 +93,8 @@ def main():
     ap.add_argument("out_dir")
     ap.add_argument("--set", action="append", default=[])
     ap.add_argument("--runs", type=int, default=1)
+    ap.add_argument("--after", action="append", default=[],
+                    help="override applied AFTER dependent inputs are derived (e.g. a derived value the user edits later)")
     ap.add_argument("--fresh", action="store_true",
                     help="also run every run on a brand-new bridge and compare (stale-state check)")
     ap.add_argument("--then", action="append", default=[],
@@ -108,6 +110,7 @@ def main():
     with contextlib.redirect_stdout(io.StringIO()):
         solve_extend_basic_input_dict(ui)
 
+    ui.update(parse_overrides(args.after))
     bridge = PlateGirderBridge()
     log = _Log()
     runs = []
