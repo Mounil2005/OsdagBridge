@@ -118,21 +118,40 @@ def ch3_loads(input_dict):
         impact_factor_str = "N/A"
 
     lanes = input_dict.get(KEY_WC_LD_LANE_TABLE_COUNT)
-    braking_force_str = ""
-    braking_kN_str = "N/A"       # numeric value for Table 3.4 (unit in its own column)
     lanes_str = "N/A"
     if lanes not in (None, ""):
         try:
-            lanes_int = int(lanes)
-            lanes_str = str(lanes_int)
-            braking_force_t = IRC6_2017.cl_211_2_braking_force(lanes_int)
-            braking_force_kN = braking_force_t * 9.81
-            braking_force_str = f"{braking_force_kN:.2f} kN ({braking_force_t:.2f} tonnes)"
-            braking_kN_str = f"{braking_force_kN:.2f}"
+            lanes_str = str(int(lanes))
         except Exception:
-            braking_force_str = "N/A"
-    else:
-        braking_force_str = "N/A"
+            pass
+
+    # Braking force per selected vehicle: 20 % of the vehicle's own load
+    # (IRC 6 Cl. 211.2). The backend returns wheel loads in N. Vehicles whose
+    # total load is not defined in the backend get a dash.
+    def _braking_row(label, loads_fn):
+        try:
+            total_kN = sum(loads_fn()['wheel_loads']) / 1000.0
+            return label, f"{0.20 * total_kN:.2f}"
+        except Exception:
+            return label, "---"
+
+    _brake_specs = [
+        (KEY_LL_IRC_CLASS_A, "Class A", IRC6_2017.cl_204_1_ClassA_vehicle),
+        (KEY_LL_IRC_70R_WHEELED, "Class 70R (Wheeled)", IRC6_2017.cl_204_1_Class70R_vehicle_wheel),
+        (KEY_LL_IRC_70R_TRACKED, "Class 70R (Tracked)", None),
+        (KEY_LL_IRC_70R_BOGIE, "Class 70R (Bogie)", None),
+        (KEY_LL_IRC_AA_WHEELED, "Class AA (Wheeled)", None),
+        (KEY_LL_IRC_AA_TRACKED, "Class AA (Tracked)", None),
+    ]
+    braking_rows = []
+    for _k, _label, _fn in _brake_specs:
+        if input_dict.get(_k):
+            _l, _v = _braking_row(_label, _fn) if _fn else (_label, "---")
+            braking_rows.append(
+                "Braking Force, " + _tex(_l) + " & " + _v + r" & kN & IRC 6 Cl. 211.2 " + (r"(20\,\% of vehicle load)" if _v != "---" else "(vehicle load not defined)") + r" \\[6pt]" + "\n\\hline")
+    if not braking_rows:
+        braking_rows.append(r"Braking Force & --- & kN & IRC 6 Cl. 211.2 \\[6pt]" + "\n\\hline")
+    braking_rows_str = "\n".join(braking_rows)
 
     # --- Per-vehicle rows for Table 3.3: only vehicles selected in the UI
     #     (Additional Inputs > Loading tab) are listed, each with its impact factor.
@@ -362,8 +381,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \hline
 Design Lanes & """ + _tex(lanes_str) + r""" & No. & Typical Section \\[6pt]
 \hline
-Braking Force & """ + _tex(braking_kN_str) + r""" & kN & IRC 6 Cl. 211.2 \\[6pt]
-\hline
+""" + braking_rows_str + r"""
 Centrifugal Force & Not considered & --- & IRC 6 Cl. 212 (straight span) \\[6pt]
 \hline
 \end{longtable}

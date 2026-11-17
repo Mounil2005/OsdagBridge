@@ -148,3 +148,16 @@ def test_material_chart_includes_end_diaphragm_and_shared_axis(tmp_path):
     tex = charts.material_chart(q, str(tmp_path))
     assert "not quantified separately" not in tex
     assert os.path.exists(tmp_path / "material_quantities_chart.png")
+
+
+def test_braking_force_uses_twenty_percent_of_vehicle_load():
+    from osdagbridge.core.reports.chap3 import ch3_loads
+    from osdagbridge.core.utils.common import (
+        KEY_LL_IRC_CLASS_A, KEY_LL_IRC_70R_WHEELED, KEY_LL_IRC_AA_WHEELED, KEY_SPAN)
+
+    tex = ch3_loads({KEY_SPAN: "30", KEY_LL_IRC_CLASS_A: True,
+                     KEY_LL_IRC_70R_WHEELED: True, KEY_LL_IRC_AA_WHEELED: True})
+    assert "Braking Force, Class A & 108.69 & kN" in tex
+    assert "Braking Force, Class 70R (Wheeled) & 196.20 & kN" in tex
+    assert "Braking Force, Class AA (Wheeled) & --- & kN" in tex
+    assert "Braking Force & N/A" not in tex
