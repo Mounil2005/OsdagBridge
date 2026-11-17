@@ -1,0 +1,6 @@
+[TC-011] run 1: error=None  output_keys=1036
+   util: {'util.flexure': 27.65, 'util.shear': 95.73, 'util.interaction': 28.23, 'util.ltb': 20.66, 'util.long_trans_shear': 27.37, 'util.fatigue': 222.21, 'util.stress_limitation': 39.42, 'util.deflection_crack': 66.24}
+   input changed by design: 35, added: 0, removed: 0
+     CHANGED member_properties.girder_details.section_input.bottom_flange_thickness: 'All' -> 0.022
+     CHANGED member_properties.girder_details.section_input.bottom_flange_thickness.G1.M1: 'All' -> 0.022
+     CHANGED member_properties.girder_details.section_input.bottom_flange_thickness.G2.M1: 'All' -> 0.022

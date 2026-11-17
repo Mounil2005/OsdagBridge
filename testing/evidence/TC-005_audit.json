@@ -1,0 +1,168 @@
+{
+ "case": "TC-005",
+ "overrides": {
+  "geometry.span": "45.1"
+ },
+ "runs": [
+  {
+   "stale_state_diff": null,
+   "run": 1,
+   "error": null,
+   "utilisation": {
+    "util.flexure": 13.13,
+    "util.shear": 26.86,
+    "util.interaction": 13.420000000000002,
+    "util.ltb": 32.0,
+    "util.long_trans_shear": 18.75,
+    "util.fatigue": 108.58000000000001,
+    "util.stress_limitation": 16.580000000000002,
+    "util.deflection_crack": 35.06
+   },
+   "n_output_keys": 1066,
+   "input_changed_by_design": {
+    "member_properties.girder_details.section_input.bottom_flange_thickness": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.bottom_flange_thickness.G1.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.bottom_flange_thickness.G2.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.bottom_flange_thickness.G3.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.bottom_flange_thickness.G4.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.bottom_flange_width": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.bottom_flange_width.G1.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.bottom_flange_width.G2.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.bottom_flange_width.G3.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.bottom_flange_width.G4.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.depth": {
+     "before": 2510,
+     "after": 2.51
+    },
+    "member_properties.girder_details.section_input.depth.G1.M1": {
+     "before": 2510,
+     "after": 2.51
+    },
+    "member_properties.girder_details.section_input.depth.G2.M1": {
+     "before": 2510,
+     "after": 2.51
+    },
+    "member_properties.girder_details.section_input.depth.G3.M1": {
+     "before": 2510,
+     "after": 2.51
+    },
+    "member_properties.girder_details.section_input.depth.G4.M1": {
+     "before": 2510,
+     "after": 2.51
+    },
+    "member_properties.girder_details.section_input.top_flange_thickness": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.top_flange_thickness.G1.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.top_flange_thickness.G2.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.top_flange_thickness.G3.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.top_flange_thickness.G4.M1": {
+     "before": "All",
+     "after": 0.032
+    },
+    "member_properties.girder_details.section_input.top_flange_width": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.top_flange_width.G1.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.top_flange_width.G2.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.top_flange_width.G3.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.top_flange_width.G4.M1": {
+     "before": 760,
+     "after": 0.76
+    },
+    "member_properties.girder_details.section_input.web_depth": {
+     "before": 2447,
+     "after": 2.447
+    },
+    "member_properties.girder_details.section_input.web_depth.G1.M1": {
+     "before": 2447,
+     "after": 2.447
+    },
+    "member_properties.girder_details.section_input.web_depth.G2.M1": {
+     "before": 2447,
+     "after": 2.447
+    },
+    "member_properties.girder_details.section_input.web_depth.G3.M1": {
+     "before": 2447,
+     "after": 2.447
+    },
+    "member_properties.girder_details.section_input.web_depth.G4.M1": {
+     "before": 2447,
+     "after": 2.447
+    },
+    "member_properties.girder_details.section_input.web_thickness": {
+     "before": "All",
+     "after": 0.014
+    },
+    "member_properties.girder_details.section_input.web_thickness.G1.M1": {
+     "before": "All",
+     "after": 0.014
+    },
+    "member_properties.girder_details.section_input.web_thickness.G2.M1": {
+     "before": "All",
+     "after": 0.014
+    },
+    "member_properties.girder_details.section_input.web_thickness.G3.M1": {
+     "before": "All",
+     "after": 0.014
+    },
+    "member_properties.girder_details.section_input.web_thickness.G4.M1": {
+     "before": "All",
+     "after": 0.014
+    }
+   },
+   "input_added_by_design": {},
+   "input_removed_by_design": {}
+  }
+ ]
+}

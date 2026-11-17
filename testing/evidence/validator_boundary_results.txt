@@ -1,0 +1,11 @@
+baseline             valid=True  
+span 19.9 (<20)      valid=False  • geometry.span: Span must be between 20.0 m and 45.0 m (software limitation).
+span 45.1 (>45)      valid=False  • geometry.span: Span must be between 20.0 m and 45.0 m (software limitation).
+span 0               valid=False  • geometry.span: Span must be between 20.0 m and 45.0 m (software limitation). | • typical_section.crash_barrier.post_spacing: Crash barrier
+span -5              valid=False  • geometry.span: Span must be between 20.0 m and 45.0 m (software limitation). | • typical_section.crash_barrier.post_spacing: Crash barrier
+span abc             valid=False  • geometry.span: Span must be a numeric value.
+span empty           valid=True  
+CW 4.0 (<4.25)       valid=False  • geometry.carriageway_width: Minimum carriageway width required is 4.25 m as per IRC 5:2015 Clause 104.3.1.
+CW 24 (>23.6)        valid=False  • geometry.carriageway_width: Carriageway width exceeds 23.6 m (software limitation).
+skew 20 (>15)        valid=False  • geometry.skew_angle: Skew angle must be between -15.0° and 15.0°.
+skew -20             valid=False  • geometry.skew_angle: Skew angle must be between -15.0° and 15.0°.

@@ -1,0 +1,258 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{longtable,booktabs,array,graphicx,xcolor,float,caption,enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\definecolor{osdag}{RGB}{105,145,20}
+\definecolor{failc}{RGB}{190,30,30}
+\definecolor{passc}{RGB}{30,120,50}
+\newcommand{\pass}{\textcolor{passc}{\textbf{PASS}}}
+\newcommand{\fail}{\textcolor{failc}{\textbf{FAIL}}}
+\newcommand{\gh}[1]{\href{https://github.com/Nidhikhare12/OsdagBridge/issues/#1}{\#{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\captionsetup{font=small,labelfont=bf}
+\setcounter{tocdepth}{2}
+
+\title{\textbf{OsdagBridge Software Testing \& Issue Reporting}\\[4pt]
+\large Short-span steel plate girder bridge module\\[2pt]
+\normalsize FOSSEE Winter Internship 2026 screening task}
+\author{Mounil Hiren Kankhara}
+\date{18 November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+Repository under test & \url{https://github.com/Nidhikhare12/OsdagBridge} (branch \texttt{dev}, commit \texttt{d74f56d})\\
+Test logs, scripts and notes & \url{https://github.com/Mounil2005/OsdagBridge} (branch \texttt{task-testing})\\
+Issues raised & \gh{64}, \gh{65}, \gh{66}, \gh{67}, \gh{68}, \gh{69}, \gh{70}, \gh{84}\\
+Screencast & see the link in the submission form (file \texttt{OsdagBridge\_Testing\_Workflow.mp4})
+\end{tabular}
+\end{center}
+
+\section*{Summary}
+Fourteen test cases were executed: eleven at the code level (design pipeline driven from a script, with the input and output dictionaries compared before and after each run) and three through the desktop application (custom materials and three consecutive runs, recorded on video). Eight GitHub issues were raised with root causes and suggested code changes. The main findings are:
+\begin{itemize}[nosep]
+\item The design pipeline silently rewrites 35 keys of the input dictionary from millimetres to metres, so the report prints girder dimensions in metres under an ``mm'' heading (\gh{66}).
+\item The report Executive Summary says every component passes while the overall status is Fail (\gh{65}).
+\item The railing load is 1.4715~kN/m in the saved input and 6.806~kN/m in the design and report (\gh{64}).
+\item Input validation is inconsistent: the file validator accepts an empty span, and the core \texttt{design()} accepts spans outside 20--45~m (\gh{67}, \gh{69}).
+\item Several report fields are blank, have no units, or show \texttt{N/A} (\gh{68}, \gh{70}), and the crash barrier is reported as 0.00~MT because of a unit mismatch (\gh{84}).
+\end{itemize}
+No crash or wrong design value was found while running consecutive designs on the same bridge object (Section~\ref{sec:multi}).
+
+\tableofcontents
+\newpage
+
+\section{Introduction and Setup}
+\textbf{Module under test:} the plate girder bridge design of OsdagBridge (input dialogs, OpenSees grillage analysis, design checks, CAD model, plots and the LaTeX report).
+
+\textbf{Environment.} Windows 11, Python 3.12 in the \texttt{osdagbridge-env} conda environment created from \texttt{environment.yml}, MiKTeX 25.12 for the report. The fork was cloned and \texttt{upstream} set to the task repository, then \texttt{dev} was updated with \texttt{git pull upstream dev --rebase}; every result below is on commit \texttt{d74f56d}. The application was started with \texttt{python -m osdagbridge.desktop}.
+
+\textbf{Baseline design used for most cases.} Highway bridge, span 30~m, carriageway 7.5~m, no median, no footpath, skew not entered, location Ahmedabad (Gujarat), design type Optimized, four girders at 2.1~m spacing, deck 250~mm, deck overhang 1.05~m, girder \texttt{E 350A}, deck \texttt{M40}, crash barrier \texttt{IRC 5 -- RCC Crash Barrier}, railing \texttt{IRC 5 -- RCC Railing}. It is saved as \texttt{osi\_files/TC-baseline\_inputs.osi}.
+
+\section{Test Methodology}
+Two levels of testing were used, because the application has a GUI layer and a computation layer and a defect can sit in either.
+
+\textbf{Level 1, code level (TC-001 to TC-011).} The script \texttt{testing\_scripts/run\_case.py} loads an \texttt{.osi} file (the file written by \emph{Save Input}), applies the values a user would type, runs the same solver that the GUI uses to derive dependent inputs, then calls \texttt{design()}. For every run it records:
+\begin{enumerate}[nosep]
+\item the input dictionary before and after \texttt{design()} and a key-by-key difference of the two;
+\item the full output dictionary (about 1\,060 keys) and the eight governing utilisation ratios;
+\item for repeated runs on the same bridge object, a comparison of each run with a run on a fresh object (stale-state check).
+\end{enumerate}
+The outputs are in \texttt{evidence/} (\texttt{TC-xxx\_run1\_input.json}, \texttt{\_output.json}, \texttt{\_audit.json}). The validator behaviour was probed separately (\texttt{evidence/validator\_boundary\_results.txt}).
+
+\textbf{Level 2, GUI level (TC-012 to TC-014).} Custom steel and custom deck concrete were entered in the \emph{Enter Custom Properties} dialogs, the design was run, then unlocked, edited and run again, twice. The 3D model and the structural plots were opened after each run. The session was recorded (3 minutes); the input saved after each step is stored as an \texttt{.osi} file, and these three files were also run through the Level 1 script to obtain the dictionary values listed below.
+
+\textbf{Component coverage.} The design checks cover the steel plate girders (flexure, shear, interaction, lateral torsional buckling, longitudinal shear, fatigue, stress limitation, deflection), cross bracing and end diaphragms (through the Chapter 5 results), and the concrete deck slab. The report tables for all four were compared with the dictionaries for the baseline case.
+
+\textbf{Pass/fail rule.} A case is marked PASS when the design completes, the values the user entered are used, and nothing in the dictionaries or the report contradicts the inputs. It is marked FAIL when an error, an unexpected acceptance of invalid input, or a mismatch between UI, dictionary and report is found. Where a design value is above its limit (fatigue utilisation above 100\,\%) the design result is reported as it is; this is an engineering outcome already tracked in upstream issue \gh{44}, not repeated here.
+
+\section{Test Cases}
+The full log, with every column of the task requirements (exact inputs, custom-property flags, run number, expected and actual result, dictionary comparisons, CAD and plot status, issue link, evidence file), is in \texttt{test\_case\_log.csv}. All cases not listed with other values use the baseline design above.
+
+\subsection{Passing cases}
+\begin{longtable}{@{}L{1.3cm}L{4.2cm}L{4.8cm}L{5.6cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Parameters changed} & \textbf{Result} & \textbf{Notes}\\
+\midrule\endfirsthead
+\toprule \textbf{ID} & \textbf{Parameters changed} & \textbf{Result} & \textbf{Notes}\\ \midrule\endhead
+TC-002 & span 20 (minimum) & completes; flexure 25.3\,\%, shear 38.2\,\% & fatigue 220.9\,\% (already \gh{44})\\
+TC-003 & span 45 (maximum), carriageway 12 & completes; flexure 19.0\,\%, shear 57.4\,\% & fatigue 160.1\,\% (already \gh{44})\\
+TC-006 & skew angle 10$^{\circ}$ & completes; flexure 19.4\,\%, shear 42.2\,\% & skew applied: values differ from baseline\\
+TC-007 & include median = Yes & completes; flexure 34.6\,\%, shear 80.9\,\% & fatigue 292.6\,\% (already \gh{44})\\
+TC-008 & custom girder steel (fy 410, fu 540, E 200, G 76.9, $\nu$ 0.3, density 78.5) and custom deck concrete (fck 35, fctm 2.8, Ecm 32, density 25) & completes; flexure 17.1\,\% against 19.5\,\% for the default steel & custom steel is applied; custom density problems are already \gh{20}, \gh{41}, \gh{43}\\
+TC-009 & three consecutive runs: span 30, 25, 35 with carriageway 9 & each run equals a run on a fresh object & see Section~\ref{sec:multi}\\
+TC-011 & deck overhang set to 0 & completes (shear 95.7\,\%) & the failure reported upstream (Aditya-Donde \#440) does not reproduce in this repository\\
+TC-012 & GUI: custom steel and deck concrete (as TC-008 but steel density 76.4 and deck density 24.5) & values kept in saved file, design completes & CAD and plots shown (video)\\
+TC-013 & GUI run 2: span 24, bracing spacing 12 m & completes; shear 53.8\,\%, fatigue 196.8\,\% & values update; no stale data\\
+TC-014 & GUI run 3: span 28, carriageway 8.5, bracing spacing 14 m & completes; shear 75.3\,\%, fatigue 192.7\,\% & values update; no stale data\\
+\bottomrule
+\end{longtable}
+
+\subsection{Failing cases}
+\begin{longtable}{@{}L{1.3cm}L{3.5cm}L{5.4cm}L{5.7cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Parameters} & \textbf{Observed} & \textbf{Issue}\\
+\midrule\endfirsthead
+\toprule \textbf{ID} & \textbf{Parameters} & \textbf{Observed} & \textbf{Issue}\\ \midrule\endhead
+TC-001 & baseline (default design, report generated in the GUI) & the design completes, but the report shows girder dimensions in metres labelled mm, ``design pass'' for every component while the status is Fail, blank or N/A load rows, no units for two summary fields; 35 input keys are changed by \texttt{design()}; the railing load differs between input and report & \gh{64}, \gh{65}, \gh{66}, \gh{68}, \gh{70}\\
+TC-004 & span 19.9 (UI limit 20.0--45.0) & \texttt{design()} completes without error; the file validator rejects the same value & \gh{69}\\
+TC-005 & span 45.1 & \texttt{design()} completes without error (fatigue 108.6\,\%) & \gh{69}\\
+TC-010 & \texttt{geometry.span: ''} in the \texttt{.osi} file & validator says the file is valid; \texttt{solve\_extend\_basic\_input\_dict} then raises \texttt{ValueError} & \gh{67}\\
+TC-001 (report, Chapter 7) & default crash barrier & Table 7.1 shows 0.00~MT for the crash barrier; correct value 45.34~MT; cause is a mm$^2$/m$^2$ mismatch between the defaults and the Additional Inputs dialog & \gh{84}\\
+\bottomrule
+\end{longtable}
+
+\section{UI vs Input/Output Dictionary Comparison}
+\subsection{Input dictionary against the values entered}
+For the baseline case the values saved from the UI, the input dictionary before \texttt{design()} and the input dictionary after \texttt{design()} were compared key by key (576 keys). Scalar inputs such as span, carriageway width, girder count, spacing, overhang and material properties are identical before design. After \texttt{design()} 35 keys differ, all of them girder section dimensions.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}L{5.9cm}L{2.2cm}L{2.4cm}L{2.2cm}L{2.5cm}@{}}
+\toprule
+\textbf{Input key (UI field)} & \textbf{Entered in UI} & \textbf{Dictionary before design} & \textbf{Dictionary after design} & \textbf{Match}\\
+\midrule
+geometry.span (Span) & 30 & 30 & 30 & yes\\
+geometry.carriageway\_width & 7.5 & 7.5 & 7.5 & yes\\
+typical\_section.no\_of\_girders & 4 & 4 & 4 & yes\\
+typical\_section.girder\_spacing & 2.1 & 2.1 & 2.1 & yes\\
+typical\_section.deck\_overhang & 1.05 & 1.05 & 1.05 & yes\\
+material.girder (Girder) & E 350A & E 350A & E 350A & yes\\
+material.girder.fy / fu (MPa) & 350 / 490 & 350 / 490 & 350 / 490 & yes\\
+material.deck / fck (MPa) & M40 / 40 & M40 / 40 & M40 / 40 & yes\\
+typical\_section.crash\_barrier.area & (default) & 302282.768 (mm$^2$) & 302282.768 & yes, but unit differs from the dialog (\gh{84})\\
+typical\_section.railing.load\_value (kN/m) & (default) & 1.4715 & 1.4715 & value in report: 6.806 (\gh{64})\\
+section\_input.depth (mm) & 1670 & 1670 & \textbf{1.67} & \textcolor{failc}{\textbf{no}} (\gh{66})\\
+section\_input.bottom\_flange\_width (mm) & 510 & 510 & \textbf{0.51} & \textcolor{failc}{\textbf{no}} (\gh{66})\\
+section\_input.bottom\_flange\_thickness (mm) & All & All & \textbf{0.022} & \textcolor{failc}{\textbf{no}} (\gh{66})\\
+\bottomrule
+\end{tabular}
+\caption{Baseline case: input dictionary against the UI values.}
+\end{table}
+
+For the custom-material cases (TC-008, TC-012, TC-013, TC-014) the custom values entered in the dialogs (fy 410, fu 540, fck 35, fctm 2.8, Ecm 32) are present in the saved file and in the dictionary and are not replaced by defaults during the design: the utilisation values change in the expected direction (flexure 17.1\,\% with custom steel against 19.5\,\% with the default steel). The existing issues on the dialog overwriting custom values (\gh{19}, \gh{20}, \gh{41}, \gh{43}) were not repeated.
+
+\subsection{Output dictionary against the report and the display docks}
+The output dictionary of the baseline case was compared with the report generated in the GUI (58 pages).
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}L{4.6cm}L{4.6cm}L{4.8cm}L{2.2cm}@{}}
+\toprule
+\textbf{Item} & \textbf{Output dictionary} & \textbf{Report} & \textbf{Match}\\
+\midrule
+Span, carriageway width & 30, 7.5 & 30 m, 7.5 m (Executive Summary and Table 2.2) & yes\\
+Overall status & fatigue 157.26\,\% (above 100\,\%) & ``Fail (Fatigue Normal Stress, \ldots)'' & yes\\
+Executive Summary, key outcomes & fatigue fails & girder, bracing, diaphragm and deck all ``design pass'' & \textcolor{failc}{\textbf{no}} (\gh{65})\\
+Girder total depth & 1670 mm (dictionary before design) & ``1.67 mm'' (Section Dimensions table) & \textcolor{failc}{\textbf{no}} (\gh{66})\\
+Railing load & 1.4715 kN/m (saved input) & 6.806 kN/m (Tables 2.5, 3.2) & \textcolor{failc}{\textbf{no}} (\gh{64})\\
+Traffic lanes, braking load, seismic force & not present in the saved input & blank or N/A & \textcolor{failc}{\textbf{no}} (\gh{68})\\
+Crash barrier weight & 0.30228 m$^2$ $\times$ 30 m $\times$ 2 expected 45.34 MT & 0.00 MT (Table 7.1) & \textcolor{failc}{\textbf{no}} (\gh{84})\\
+\bottomrule
+\end{tabular}
+\caption{Baseline case: output dictionary and input against the generated report.}
+\end{table}
+
+\textbf{Observation, not filed.} The fatigue utilisation of the script run of the baseline is 157.26\,\% (UR 1.57) while the report generated from the GUI shows 1.58 (fatigue normal stress 145.86 MPa against 145.45 MPa). The GUI state may differ slightly from the saved file (for example values set by the dialogs), so this was not raised as a bug; it is a candidate for further investigation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{issue_images/report_p10_section_dims.png}
+\caption{Report ``Girder Section Dimensions'' table with metres printed under an mm heading (\gh{66}).}
+\end{figure}
+
+\section{Multi-Run Stability}\label{sec:multi}
+\textbf{Code level (TC-009).} Three consecutive designs on the same bridge object (span 30, then 25, then 35 with carriageway 9) were compared with three runs on fresh objects. All eight utilisation values and the error field are identical for every run, so no stale values are carried over.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lL{4.5cm}rrrr@{}}
+\toprule
+\textbf{Run} & \textbf{Inputs} & \textbf{Flexure \%} & \textbf{Shear \%} & \textbf{LTB \%} & \textbf{Fatigue \%}\\
+\midrule
+1 & span 30 & 19.51 & 39.91 & 22.81 & 157.26\\
+2 & span 25 & 23.80 & 57.73 & 19.71 & 199.16\\
+3 & span 35, carriageway 9 & 19.05 & 56.49 & 28.23 & 150.50\\
+\bottomrule
+\end{tabular}
+\caption{TC-009: three consecutive runs on one object; each equals the run on a fresh object. No error in any run.}
+\end{table}
+
+\textbf{GUI level (TC-012 to TC-014).} In the application the design was locked after each run (padlock shown), then unlocked, the inputs were edited and the design was run again. The three runs below use the same custom materials.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lL{5cm}rrrr@{}}
+\toprule
+\textbf{Run} & \textbf{Inputs} & \textbf{Flexure \%} & \textbf{Shear \%} & \textbf{LTB \%} & \textbf{Fatigue \%}\\
+\midrule
+1 (TC-012) & span 30, carriageway 7.5 & 17.14 & 39.91 & 22.50 & 157.26\\
+2 (TC-013) & span 24, carriageway 7.5 & 20.95 & 53.79 & 17.41 & 196.76\\
+3 (TC-014) & span 28, carriageway 8.5 & 20.91 & 75.34 & 22.35 & 192.66\\
+\bottomrule
+\end{tabular}
+\caption{GUI runs with custom materials; values from the saved input of each run executed through the audit script.}
+\end{table}
+
+\textbf{Observations.} The span and carriageway fields, the cross-section drawing, the output dock sliders, the 3D model and the plots were all updated after each run; no crash, frozen window or leftover geometry of the previous run was seen in the recording. The one limitation found is the one in Section~4: the dictionary is changed by \texttt{design()}, so a second design on the same dictionary starts from changed values. The script showed no effect on the results, because the pipeline re-derives these keys, but the behaviour is fragile and is described in \gh{66}.
+
+\section{3D CAD and Plot Verification}
+The model and plots were checked in the application after each run (Level 2).
+\begin{itemize}[nosep]
+\item \textbf{3D CAD:} deck, girders, bracing under the deck and both crash barriers are drawn; the deck length and width follow the inputs (span 24 in run 2, span 28 with carriageway 8.5 in run 3). The layer check boxes (Bridge, Girder, Deck, Cross Bracing, Crash Barrier) are present above the model.
+\item \textbf{Plots:} the deflection diagram and the bending moment diagram for a selected member and load case open from the output dock after the last run and show a curve for each girder.
+\end{itemize}
+Visual accuracy was judged by inspection of the geometry against the inputs; the plotted values were not recomputed independently.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.46\textwidth]{video_frames/custom_steel_dialog.png}\hfill
+\includegraphics[width=0.46\textwidth]{video_frames/custom_concrete_dialog.png}
+\caption{Custom properties entered for the girder steel (fy 410, fu 540) and the deck concrete (fck 35, fctm 2.8, Ecm 32).}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{video_frames/frame_100s.png}\hfill
+\includegraphics[width=0.48\textwidth]{video_frames/frame_150s.png}
+\caption{3D model after run 2 (span 24) and after run 3 (span 28, carriageway 8.5).}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{video_frames/frame_178s.png}
+\caption{Deflection diagram of the final run.}
+\end{figure}
+
+\section{Issues Raised}
+Each issue was checked against the open and closed issues of the repository before posting. Where an existing issue overlaps, the new issue says so and states what it adds. Every issue gives the trigger conditions, evidence (screenshots, input and output values), the root cause with file and line, and a suggested change.
+
+\begin{longtable}{@{}L{1.1cm}L{7.3cm}L{7.2cm}@{}}
+\toprule
+\textbf{Issue} & \textbf{Title} & \textbf{Root cause and files}\\
+\midrule\endfirsthead
+\toprule \textbf{Issue} & \textbf{Title} & \textbf{Root cause and files}\\ \midrule\endhead
+\gh{64} & Default RCC railing load is 1.4715~kN/m in the input dictionary but 6.806~kN/m in the design and report (extension of \gh{19}) & two formulas write the same key: \texttt{defaults.py} and \texttt{additional\_inputs.py}\\
+\gh{65} & Executive Summary says ``design pass'' for every component even when Overall Design Status is Fail & four lines hard-coded in \texttt{reports/executive\_summary.py}\\
+\gh{66} & Report ``Girder Section Dimensions'' table prints metres labelled as mm & \texttt{plategirderbridge.py} \texttt{\_convert\_girder\_dims\_mm\_to\_m()} converts in place; \texttt{reports/chap2.py} prints the same dictionary\\
+\gh{67} & An \texttt{.osi} file with an empty Span passes validation, then \texttt{solve\_extend\_basic\_input\_dict} raises \texttt{ValueError} & validator treats an empty string as valid; \texttt{defaults.py} line 531\\
+\gh{68} & Report shows blank or N/A for number of traffic lanes, braking load, wind and seismic values & report depends on keys that are not saved unless a dialog is opened; computed strings not used in \texttt{reports/chap3.py}\\
+\gh{69} & \texttt{design()} accepts out-of-range Span (19.9 m, 45.1 m) and completes without an error & range check exists only in the UI and file validator, not in the core\\
+\gh{70} & Executive Summary: girder spacing and deck thickness have no units, and the $\le$ symbol is dropped & \texttt{reports/executive\_summary.py}; \texttt{report\_utils.\_tex()} does not map the symbol\\
+\gh{84} & Crash barrier area is mm$^2$ in the defaults but m$^2$ in the Additional Inputs dialog, so the take-off shows 0.00~MT & \texttt{defaults.py} line 204, \texttt{additional\_inputs.py} lines 933 and 947, \texttt{boq/boq\_generator.py}\\
+\bottomrule
+\end{longtable}
+
+\section{Conclusion}
+The design engine itself behaved consistently in every case that was run: no crashes, results change correctly when inputs change, custom steel and concrete values are used, and repeated runs on one object give the same results as fresh runs. The defects found are in input validation, in the handling of units between the dialogs, defaults and the report, and in the content of the generated report. The most important for users are the silent change of the input dictionary to metres (\gh{66}) and the ``design pass'' text next to a failing design (\gh{65}).
+
+\textbf{Limits of this testing.} Only the plate girder bridge was tested. Location was set by name (Ahmedabad); the map and custom location methods, footpath cases, the Additional Inputs combinations for other crash barrier and railing types, and the CAD export were not exercised. Fatigue utilisation above 100\,\% appeared in almost every case; the design checks themselves were not re-derived by hand, so correctness of the engineering values is not claimed, only their consistency with the inputs and between the dictionaries and the report.
+
+\textbf{Repository contents (branch \texttt{task-testing}):} \texttt{testing\_scripts/run\_case.py} and \texttt{run\_batch.sh}, \texttt{testing/test\_case\_log.csv}, \texttt{testing/osi\_files/}, \texttt{testing/evidence/}, this report.
+
+\end{document}
