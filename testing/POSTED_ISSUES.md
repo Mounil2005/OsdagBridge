@@ -13,3 +13,14 @@
 Screenshots are hosted on the `issue-evidence` branch of Mounil2005/OsdagBridge (evidence/*.png). Do not delete that branch while the issues are open.
 
 | 84 | Crash barrier area is mm2 in the defaults but m2 in the Additional Inputs dialog, so the Material Take-off shows 0.00 MT for the crash barrier | https://github.com/Nidhikhare12/OsdagBridge/issues/84 |  (posted 2026-11-14)
+| 140 | Impact factor in the analysis is always 0.10, for every span and every vehicle | https://github.com/Nidhikhare12/OsdagBridge/issues/140 |  (posted 2026-11-18)
+| 141 | Transverse wind force ignores the girder depth and is applied to both outer girders at once | https://github.com/Nidhikhare12/OsdagBridge/issues/141 |  (posted 2026-11-18)
+| 142 | Vehicle choices in Additional Inputs > Loading are ignored | https://github.com/Nidhikhare12/OsdagBridge/issues/142 |  (posted 2026-11-18)
+
+Comments: #68 (braking force UnboundLocalError) https://github.com/Nidhikhare12/OsdagBridge/issues/68#issuecomment-6960455294 ; #132 (skew asymmetry reproduced) https://github.com/Nidhikhare12/OsdagBridge/issues/132#issuecomment-6960456238
+| 143 | Crash barrier and median loads from the inputs never reach the analysis | https://github.com/Nidhikhare12/OsdagBridge/issues/143 |  (posted 2026-11-18)
+| 144 | Footpath pedestrian load: Custom pressure ignored, added to dead load | https://github.com/Nidhikhare12/OsdagBridge/issues/144 |  (posted 2026-11-18)
+| 145 | Partial safety factors γc, γs, γfl and the self-weight factor have no effect on the design | https://github.com/Nidhikhare12/OsdagBridge/issues/145 |  (posted 2026-11-18)
+| 146 | Turning off design checks in Design Options (Cont.) does nothing | https://github.com/Nidhikhare12/OsdagBridge/issues/146 |  (posted 2026-11-18)
+
+Comment: #142 (clarified description) https://github.com/Nidhikhare12/OsdagBridge/issues/142#issuecomment-6963194687
