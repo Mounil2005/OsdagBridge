@@ -24,3 +24,4 @@ Comments: #68 (braking force UnboundLocalError) https://github.com/Nidhikhare12/
 | 146 | Turning off design checks in Design Options (Cont.) does nothing | https://github.com/Nidhikhare12/OsdagBridge/issues/146 |  (posted 2026-11-18)
 
 Comment: #142 (clarified description) https://github.com/Nidhikhare12/OsdagBridge/issues/142#issuecomment-6963194687
+| 156 | Bearing length and Construction Stage = No are not used by the design | https://github.com/Nidhikhare12/OsdagBridge/issues/156 |  (posted 2026-11-19)

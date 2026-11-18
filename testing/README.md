@@ -18,4 +18,4 @@ Run one case (inside the `osdagbridge-env` environment):
 
 Options: `--after key=value` sets a value after the dependent inputs are derived, `--runs N` repeats the design on the same object, `--then k=v,k=v` changes inputs for run 2, 3, ..., and `--fresh` repeats each run on a new object to check for state carried over between runs.
 
-Issues: https://github.com/Nidhikhare12/OsdagBridge/issues/64 to 70, 84, 140 to 146 (full list in `POSTED_ISSUES.md`)
+Issues: https://github.com/Nidhikhare12/OsdagBridge/issues/64 to 70, 84, 140 to 146, 156 (full list in `POSTED_ISSUES.md`)
