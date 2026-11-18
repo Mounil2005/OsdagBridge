@@ -30,7 +30,7 @@ Before/after PDFs: `before/Report_Before.pdf`, `after/Report_After.pdf`, both pr
 | `core/boq/boq_generator.py` | End Diaphragm steel quantity (`end_diaphragm_*` keys) |
 | `report_utils.py` | `_tex()` now converts Unicode math symbols (`≤ ≥ ± σ λ ...`) |
 | `examples/generate_report_headless.py` (new) | Headless design + report run for before/after comparison |
-| `tests/unit/test_report_tables.py` (new) | 14 unit tests for table passes, charts, `_tex`, End Diaphragm quantity |
+| `tests/unit/test_report_tables.py` (new) | 15 unit tests for table passes, charts, `_tex`, End Diaphragm quantity, braking rows |
 
 ## 3. Structure of `theme.py`
 - **Page:** `PAGE_MARGIN`, `BOTTOM_MARGIN`, `FOOTSKIP_PT`, `LINE_STRETCH`, `TEXT_WIDTH_CM`
